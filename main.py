@@ -2,7 +2,7 @@ import os
 import sys
 
 import core
-from core.notifications import NotificationType
+from core import NotificationType, Environment
 
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QFontDatabase
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
 
         cmd = data[0]
 
-        if cmd == core.commands.Environment.Notification:
+        if cmd == Environment.Notification:
             notification: core.notifications.Notification = data[1]
             ntype = notification.notificationType
 
@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
 
                 self.progressDialog.hide()
 
-        elif cmd == core.commands.Environment.GetModsData:
+        elif cmd == Environment.GetModsData:
             for modData in data[1]:
                 self.mods.addMod(gameVersion=modData.get("gameVersion", ""),
                                  name=modData.get("name", ""),
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
 
             self.loadBody()
 
-        elif cmd == core.commands.Environment.GetModConflict:
+        elif cmd == Environment.GetModConflict:
             searching, modHash = data[1]
             if searching:
                 modClass = self.mods.mods[modHash]
@@ -204,7 +204,7 @@ class MainWindow(QMainWindow):
                 self.progressDialog.setContent("Searching...")
                 self.progressDialog.show()
 
-        elif cmd == core.commands.Environment.InstallMod:
+        elif cmd == Environment.InstallMod:
             installing, modHash = data[1]
             if installing:
                 modClass = self.mods.mods[modHash]
@@ -212,7 +212,7 @@ class MainWindow(QMainWindow):
                 self.progressDialog.setContent("Loading mod...")
                 self.progressDialog.show()
 
-        elif data[0] == core.commands.Environment.UninstallMod:
+        elif data[0] == Environment.UninstallMod:
             uninstalling, modHash = data[1]
             if uninstalling:
                 modClass = self.mods.mods[modHash]
