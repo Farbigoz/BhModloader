@@ -1,0 +1,100 @@
+encode = UTF-8;
+name = Русский;
+icon = ru.png;
+
+
+
+# Snackbars
+
+snackbar.support = Поддержите проект!;
+
+
+# Диалоговые окна
+
+dialog.installingMod = Установка мода;
+dialog.uninstallingMod = Деинсталляция мода;
+
+dialog.processMod.openGameSwf = Открытие игрового SWF;
+dialog.processMod.installingModifier = Установка модификатора;
+dialog.processMod.uninstallingModifier = Деинсталляция модификатора;
+dialog.processMod.installingFile = Копирование файла;
+dialog.processMod.uninstallingFile = Восстановление файла;
+
+dialog.conflictMod.title = Конфликт модов!;
+dialog.conflictMod.infoTitle = Мод конфликтует с:;
+dialog.conflictMod.acceptButton = Установить;
+dialog.conflictMod.cancelButton = Отменить;
+
+dialog.brawlhallaNotFound.title = Brawlhalla не найдена;
+dialog.brawlhallaNotFound.autoSearchText = Автоматический поиск корректного пути...;
+dialog.brawlhallaNotFound.userSearchText = Brawlhalla не была найдена автоматически.;
+dialog.brawlhallaNotFound.button = Самостоятельно найти Brawlhalla.exe;
+
+dialog.moreThanOneBrawlhalla.title = Найдено несколько установленных Brawlhalla;
+dialog.moreThanOneBrawlhalla.autoSearchText = Автоматический поиск корректного пути...;
+dialog.moreThanOneBrawlhalla.userSearchText = Brawlhalla не была найдена автоматически.\n\nВыберите корректный путь до Brawlhalla:;
+dialog.moreThanOneBrawlhalla.button = Самостоятельно найти Brawlhalla.exe;
+
+# Head
+
+head.mods = Моды;
+head.modifiedFiles = Модиф. файлы;
+head.devTools = Инструменты разработки;
+head.settings = Настройки;
+
+head.tooltip.about = О приложении;
+head.tooltip.language = Выбрать язык;
+head.tooltip.donate = Поддержать;
+
+
+# Экран модов
+
+## Поиск
+
+mods.search = Найти;
+
+## Mod
+
+mods.mod.author = Автор;
+
+mods.mod.tooltip.installed = Установлен;
+mods.mod.tooltip.installedUpdate = Установлен, но игра обновилась\n(Часть мода могла остаться в игре);
+mods.mod.tooltip.ghostInstalled = Установлен, но удалён из папки 'Mods\';
+mods.mod.tooltip.ghostUpdate = Установлен, но удалён из папки 'Mods\' + игра обновилась;
+mods.mod.tooltip.notInstalled = Не установлен;
+
+
+## ModsList Buttons
+
+mods.list.buttonTooltip.uninstallAllMods = Деинсталлировать все моды;
+mods.list.buttonTooltip.updateModsTable = Обновить таблицу;
+mods.list.buttonTooltip.installAllMods = Установить все моды (Корректной версии);
+mods.list.buttonTooltip.openModsFolder = Открыть папку с модами;
+mods.list.buttonTooltip.updateAllMods = Обновить все моды;
+mods.list.buttonTooltip.sortModsList = Сортировка модов;
+
+
+## Sort mods
+
+mods.menu.sort.name = По названию;
+mods.menu.sort.author = По автору;
+mods.menu.sort.state = По состоянию;
+mods.menu.sort.gameVersion = По версии игры;
+mods.menu.sort.installed = Установленные;
+
+mods.menu.sort.nameReverse = По названию (реверс);
+mods.menu.sort.authorReverse = По автору (реверс);
+mods.menu.sort.stateReverse = По состоянию (реверс);
+mods.menu.sort.gameVersionReverse = По версии игры (реверс);
+
+## Описание мода
+
+mods.description.source = Источник;
+mods.description.version = Версия;
+mods.description.tags = Тэги;
+
+mods.description.button.openWeb = Страница мода;
+mods.description.button.install = Установить;
+mods.description.button.uninstall = Удалить;
+mods.escription.button.update = Обновить;
+mods.description.button.delete = Удалить;

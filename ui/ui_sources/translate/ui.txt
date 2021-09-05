@@ -1,0 +1,4 @@
+E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\header.ui
+E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\loading.ui
+E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\mods.ui
+E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\window.ui

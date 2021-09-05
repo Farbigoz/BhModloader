@@ -1,0 +1,53 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>resources/icons/hammer.png</file>
+    <file>resources/icons/addPreview.png</file>
+    <file>resources/icons/deletePreview.png</file>
+    <file>resources/icons/updatePreview.png</file>
+    <file>resources/icons/About.png</file>
+    <file>resources/icons/App.ico</file>
+    <file>resources/icons/App.png</file>
+    <file>resources/icons/Back.png</file>
+    <file>resources/icons/BackTransparent.png</file>
+    <file>resources/icons/Delete.png</file>
+    <file>resources/icons/Donate.png</file>
+    <file>resources/icons/Forward.png</file>
+    <file>resources/icons/ForwardTransparent.png</file>
+    <file>resources/icons/GhostInstalled.png</file>
+    <file>resources/icons/GhostUpdate.png</file>
+    <file>resources/icons/GitHub.png</file>
+    <file>resources/icons/Install.png</file>
+    <file>resources/icons/InstallAllMods.png</file>
+    <file>resources/icons/Installed.png</file>
+    <file>resources/icons/InstalledUpdate.png</file>
+    <file>resources/icons/Language.png</file>
+    <file>resources/icons/Loading.gif</file>
+    <file>resources/icons/NotInstalled.png</file>
+    <file>resources/icons/OpenModsFolder.png</file>
+    <file>resources/icons/OpenWeb.png</file>
+    <file>resources/icons/Search.png</file>
+    <file>resources/icons/SelectedCircle.png</file>
+    <file>resources/icons/SortModsList.png</file>
+    <file>resources/icons/Uninstall.png</file>
+    <file>resources/icons/UninstallAllMods.png</file>
+    <file>resources/icons/UnselectedCircle.png</file>
+    <file>resources/icons/Update.png</file>
+    <file>resources/icons/UpdateAllMods.png</file>
+    <file>resources/icons/UpdateModsTable.png</file>
+  </qresource>
+  <qresource prefix="fonts">
+    <file>resources/fonts/Exo 2/Exo2-SemiBold.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-Black.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-BlackItalic.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-Bold.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-BoldItalic.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-Italic.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-Medium.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-MediumItalic.ttf</file>
+    <file>resources/fonts/Roboto/Roboto-Regular.ttf</file>
+  </qresource>
+  <qresource prefix="images">
+    <file>resources/images/DefaultPreview.png</file>
+    <file>resources/images/PreviewShadow.png</file>
+  </qresource>
+</RCC>

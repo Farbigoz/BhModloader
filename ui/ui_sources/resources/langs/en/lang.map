@@ -1,0 +1,104 @@
+encode = UTF-8;
+name = English;
+icon = en.png;
+
+
+
+# Snackbars
+
+snackbar.support = Support this project!;
+
+
+# Dialogs
+
+dialog.installingMod = Installing mod;
+dialog.uninstallingMod = Uninstalling mod;
+
+dialog.processMod.openGameSwf = Open game SWF;
+dialog.processMod.installingModifier = Installing modifier;
+dialog.processMod.uninstallingModifier = Uninstalling modifier;
+dialog.processMod.installingFile = Copy file;
+dialog.processMod.uninstallingFile = Repair file;
+
+dialog.conflictMod.title = Mod conflict!;
+dialog.conflictMod.infoTitle = Mod conflicts with these:;
+dialog.conflictMod.acceptButton = Install;
+dialog.conflictMod.cancelButton = Cancel;
+
+
+dialog.brawlhallaNotFound.title = Brawlhalla was not found;
+dialog.brawlhallaNotFound.autoSearchText = Finding the correct path automatically ...;
+dialog.brawlhallaNotFound.userSearchText = Brawlhalla was not automatically found.;
+dialog.brawlhallaNotFound.button = Find Brawlhalla.exe;
+
+dialog.moreThanOneBrawlhalla.title = Found multiple installed Brawlhalla;
+dialog.moreThanOneBrawlhalla.autoSearchText = Finding the correct path automatically ...;
+dialog.moreThanOneBrawlhalla.userSearchText = Brawlhalla was not automatically found.\n\nChoose the correct path to Brawlhalla:;
+dialog.moreThanOneBrawlhalla.button = Find Brawlhalla.exe;
+
+
+# Head
+
+head.mods = Mods;
+head.modsBrowser = Mods browser;
+head.devTools = Dev Tools;
+head.settings = Settings;
+
+head.tooltip.about = About;
+head.tooltip.language = Select language;
+head.tooltip.donate = Donate;
+head.tooltip.github = GitHub;
+
+
+# Mods screen
+
+## Search
+
+mods.search = Search;
+
+## Mod
+
+mods.mod.author = Author;
+
+mods.mod.tooltip.installed = Installed;
+mods.mod.tooltip.installedUpdate = Installed, but game was updated\n(Part of mod could stay in the game);
+mods.mod.tooltip.ghostInstalled = Installed, but removed from 'Mods\\';
+mods.mod.tooltip.ghostUpdate = Installed, but removed from 'Mods\\' + game was updated;
+mods.mod.tooltip.notInstalled = Not installed;
+
+## ModsList Buttons
+
+mods.list.buttonTooltip.uninstallAllMods = Uninstall all mods;
+mods.list.buttonTooltip.updateModsTable = Update mods table;
+mods.list.buttonTooltip.installAllMods = Install all mods (correct version);
+mods.list.buttonTooltip.openModsFolder = Open mods folder;
+mods.list.buttonTooltip.updateAllMods = Update all mods;
+mods.list.buttonTooltip.sortModsList = Sort mods;
+
+
+## Sort mods
+
+mods.menu.sort.name = By name;
+mods.menu.sort.author = By author;
+mods.menu.sort.state = By state;
+mods.menu.sort.gameVersion = By game version;
+mods.menu.sort.installed = Installed;
+mods.menu.sort.notInstalled = Not installed;
+
+mods.menu.sort.nameReverse = By name (reversed);
+mods.menu.sort.authorReverse = By author (reversed);
+mods.menu.sort.stateReverse = By state (reversed);
+mods.menu.sort.gameVersionReverse = By game version (reversed);
+
+
+## Mod description
+
+mods.description.source = Source;
+mods.description.version = Version;
+mods.description.tags = Tags;
+
+mods.description.button.openWeb = Web page;
+mods.description.button.install = Install;
+mods.description.button.uninstall = Uninstall;
+mods.description.button.update = Update;
+mods.description.button.delete = Delete;

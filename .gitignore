@@ -1,0 +1,17 @@
+.idea
+venv
+Mods
+Mods Sources
+build
+dist
+__pycache__
+core/__pycache__
+core/controller/__pycache__
+core/ffdec/__pycache__
+core/swf/__pycache__
+core/utils/__pycache__
+core/worker/__pycache__
+core/.txt
+ui/ui_handler/__pycache__
+ui/ui_sources/__pycache__
+ui/utils/__pycache__
