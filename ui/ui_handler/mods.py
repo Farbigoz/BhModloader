@@ -12,7 +12,7 @@ from ..ui_sources.ui_mod_body import Ui_ModBody
 from ..ui_sources.ui_mods_actions import Ui_ModsActions
 
 from ..utils.buttons import AddButtonWidthToTexSize
-from ..utils.layout import AddToFrame
+from ..utils.layout import AddToFrame, ClearFrame
 from ..utils.buttongroup import ButtonGroup
 
 
@@ -77,7 +77,7 @@ class Mods(QWidget):
     mods: Dict[str, ModClass] = {}
     modsButtons: List[ModButton] = []
 
-    def __init__(self, installMethod, uninstallMethod, reinstallMod):
+    def __init__(self, installMethod, uninstallMethod, reinstallMod, reloadMethod, openFolderMethod):
         super().__init__()
 
         self.ui = Ui_Mods()
@@ -129,8 +129,10 @@ class Mods(QWidget):
         self.modsActions.install.clicked.connect(installMethod)
         self.modsActions.uninstall.clicked.connect(uninstallMethod)
         self.modsActions.reinstall.clicked.connect(reinstallMod)
+        self.ui.reloadModsList.clicked.connect(lambda: [self.removeAllMods(), reloadMethod()])
+        self.ui.openModsFolderButton.clicked.connect(openFolderMethod)
 
-        self.ui.searchArea.textChanged.connect(self.search)
+        self.ui.searchArea.textChanged.connect(self.searchEvent)
 
         AddToFrame(self.body.modActions, actionsWidget)
 
@@ -141,7 +143,7 @@ class Mods(QWidget):
         self.body.modPreview.setPixmap(pixmap)
         self.onResize()
 
-    def search(self, text):
+    def searchEvent(self, text):
         if not text:
             displayModButtons = self.modsButtons
 
@@ -166,8 +168,7 @@ class Mods(QWidget):
             modButton.remove()
 
         for modButton in displayModButtons:
-            modButton.setParent(self.modsList)
-            self.modsList.layout().addWidget(modButton)
+            modButton.restore(self.modsList)
 
 
 
@@ -297,7 +298,7 @@ class Mods(QWidget):
         if modClass.installed:
             AddToFrame(self.modsActions.mainFrame, self.modsActions.reinstall)
             AddToFrame(self.modsActions.mainFrame, self.modsActions.uninstall)
-        else:
+        elif modClass.modFileExist:
             AddToFrame(self.modsActions.mainFrame, self.modsActions.install)
 
         #if modClass.modFileExist:
@@ -359,4 +360,16 @@ class Mods(QWidget):
 
         self.mods[hash] = mod
         self.addModButton(mod)
+        
+    def removeAllMods(self):
+        ClearFrame(self.modsList)
 
+        self.selectedModButton = None
+        for modButton in self.modsButtons:
+            modButton.__del__()
+            del modButton
+        self.modsButtons.clear()
+
+        for mod in self.mods.values():
+            del mod
+        self.mods.clear()

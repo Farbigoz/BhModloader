@@ -67,13 +67,13 @@ class ModButton(QWidget):
         if self.pressed:
             pass
         else:
-            for b in self.buttons:
-                if b.pressed:
-                    b.pressed = False
-                    ss = b.ui.background.styleSheet()
-                    bgColor = re.findall(r"background-color: #FF(.+);", ss)[0]
-                    b.ui.background.setStyleSheet(
-                        ss.replace(f"#FF{bgColor}", f"#00{bgColor}").replace(f"#FE{bgColor}", f"#77{bgColor}"))
+            for button in self.buttons:
+                if button.pressed:
+                    button.pressed = False
+                    styleSheet = button.ui.background.styleSheet()
+                    bgColor = re.findall(r"background-color: #FF(.+);", styleSheet)[0]
+                    button.ui.background.setStyleSheet(
+                        styleSheet.replace(f"#FF{bgColor}", f"#00{bgColor}").replace(f"#FE{bgColor}", f"#77{bgColor}"))
 
             self.pressed = True
             ss = self.ui.background.styleSheet()
@@ -87,8 +87,16 @@ class ModButton(QWidget):
         self.layout().removeWidget(self)
         self.setParent(None)
 
+    def restore(self, frame):
+        self.setParent(frame)
+        frame.layout().addWidget(self)
+
     def eventFilter(self, qobject: QWidget, event):
         if event.type() == QEvent.MouseButtonPress:
             self.select()
 
         return False
+
+    def __del__(self):
+        if self in self.buttons:
+            self.buttons.pop(self.buttons.index(self))

@@ -152,7 +152,9 @@ class HeaderFrame(QWidget):
     buttonAnimPlus = None
     buttonAnimMinus = None
 
-    def setupUi(self):
+    def __init__(self):
+        super().__init__()
+
         self.ui = Ui_Header()
         self.ui.setupUi(self)
 

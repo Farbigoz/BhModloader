@@ -5,7 +5,9 @@ from ..ui_sources.ui_loading import Ui_Loading
 
 
 class Loading(QWidget):
-    def setupUi(self):
+    def __init__(self):
+        super().__init__()
+
         self.ui = Ui_Loading()
         self.ui.setupUi(self)
 

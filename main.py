@@ -34,6 +34,8 @@ if getattr(sys, "frozen", False):
 
 
 class MainWindow(QMainWindow):
+    modsPath = os.path.join(os.getcwd(), "Mods")
+
     def __init__(self):
         super().__init__()
         self.ui = Window()
@@ -43,33 +45,26 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(':/icons/resources/icons/App.ico'))
 
         self.controller = core.Controller()
-        self.controller.setModsPath(os.path.join(os.getcwd(), "Mods"))
+        self.controller.setModsPath(self.modsPath)
         self.controller.reloadMods()
         self.controller.getModsData()
 
         self.loading = Loading()
-        self.loading.setupUi()
-
         self.header = HeaderFrame()
-        self.header.setupUi()
-
-        self.mods = Mods(self.installMod, self.uninstallMod, self.reinstallMod)
-
+        self.mods = Mods(installMethod=self.installMod,
+                         uninstallMethod=self.uninstallMod,
+                         reinstallMod=self.reinstallMod,
+                         reloadMethod=self.reloadMods,
+                         openFolderMethod=self.openModsFolder)
         self.progressDialog = ProgressDialog(self)
         self.acceptDialog = AcceptDialog(self)
 
-        AddToFrame(self.ui.mainFrame, self.loading)
+        self.setLoadingScreen()
         self.loading.setText("Loading mods...")
 
         self.controllerGetterTimer = QTimer()
         self.controllerGetterTimer.timeout.connect(self.controllerGet)  # connect it to your update function
         self.controllerGetterTimer.start(10)
-
-        bgFrame = QFrame()
-        bgFrame.setStyleSheet(u"color: #FF0000;\nbackground-color: #991E2025")
-
-        #bgFrame.setParent(self)
-        #bgFrame.setGeometry(0, 0, 850, 750)
 
         # self.resize(QSize(1280, 720))
         self.setMinimumSize(QSize(850, 550))
@@ -84,8 +79,6 @@ class MainWindow(QMainWindow):
         if cmd == Environment.Notification:
             notification: core.notifications.Notification = data[1]
             ntype = notification.notificationType
-
-            print(notification)
 
             if ntype == NotificationType.LoadingMod:
                 modPath = notification.args[0]
@@ -194,7 +187,7 @@ class MainWindow(QMainWindow):
                                  currentVersion=modData.get("currentVersion", False),
                                  modFileExist=modData.get("modFileExist", False))
 
-            self.loadBody()
+            self.setModsScreen()
 
         elif cmd == Environment.GetModConflict:
             searching, modHash = data[1]
@@ -223,7 +216,12 @@ class MainWindow(QMainWindow):
         else:
             print(f"Controller <- {str(data)}\n", end="")
 
-    def loadBody(self):
+    def setLoadingScreen(self):
+        ClearFrame(self.ui.mainFrame)
+
+        AddToFrame(self.ui.mainFrame, self.loading)
+
+    def setModsScreen(self):
         ClearFrame(self.ui.mainFrame)
 
         AddToFrame(self.ui.mainFrame, self.header)
@@ -244,6 +242,14 @@ class MainWindow(QMainWindow):
             modClass = self.mods.selectedModButton.modClass
             self.controller.uninstallMod(modClass.hash)
             self.controller.getModConflict(modClass.hash)
+
+    def reloadMods(self):
+        self.setLoadingScreen()
+        self.controller.reloadMods()
+        self.controller.getModsData()
+
+    def openModsFolder(self):
+        os.startfile(self.modsPath)
 
     def resizeEvent(self, event):
         self.progressDialog.onResize()
