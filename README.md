@@ -23,7 +23,7 @@ Older versions and pre-releases builds are available on [**releases section**](h
 
 ## Licenses
 
-Brawlhalla ModCreator is licensed with GNU GPL v3, see the [license.txt](license.txt).
+Brawlhalla ModLoader is licensed with GNU GPL v3, see the [license.txt](license.txt).
 It uses modified code of these libraries:
 
 * [FFDec Library](https://github.com/jindrapetrik/jpexs-decompiler) - LGPLv3
