@@ -3,7 +3,7 @@
 **ModLoader** - tool for installing mods in Brawlhalla  
 **[ModCreator](https://github.com/Farbigoz/BhModCreator)** - tool for creating mods for Brawlhalla
 
-![window](https://github.com/Farbigoz/BhModCreator/blob/main/wiki/readme/window.png)
+![window](https://github.com/Farbigoz/BhModloader/blob/main/wiki/readme/window.png)
 
 ## Download application
 For downloading the app, see [**latest release**](https://github.com/Farbigoz/BhModloader/releases/latest). 
