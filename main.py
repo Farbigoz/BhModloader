@@ -80,7 +80,6 @@ class MainWindow(QMainWindow):
         self.controllerGetterTimer.start(10)
 
         # self.resize(QSize(1280, 720))
-        self.resize(QSize(1051, 747))
         self.setMinimumSize(QSize(850, 550))
 
         self.versionSignal.connect(self.newVersion)
