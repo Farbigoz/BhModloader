@@ -5,7 +5,7 @@ VSVersionInfo(
         filevers=(0, 1, 0, 0),
         prodvers=(0, 1, 0, 0),
         mask=0x3f,
-        flags=0x0,
+        flags=0x2,      #0x2 - Prerelease, 0x0 - Release
         OS=0x40004,
         fileType=0x1,
         subtype=0x0,
@@ -19,7 +19,7 @@ VSVersionInfo(
                     [
                         StringStruct(u'CompanyName', u'I_FabrizioG_I'),
                         StringStruct(u'FileDescription', u'Brawlhalla Mod Loader'),
-                        StringStruct(u'FileVersion', u'beta0.1'),
+                        StringStruct(u'FileVersion', u'0.1version'),
                         StringStruct(u'InternalName', u'BrawlhallaModLoader'),
                         StringStruct(u'LegalCopyright', u'\xa9 I_FabrizioG_I.'),
                         StringStruct(u'OriginalFilename', u'BrawlhallaModLoader.exe'),
