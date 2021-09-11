@@ -77,7 +77,7 @@ class Mods(QWidget):
     mods: Dict[str, ModClass] = {}
     modsButtons: List[ModButton] = []
 
-    def __init__(self, installMethod, uninstallMethod, reinstallMod, reloadMethod, openFolderMethod):
+    def __init__(self, installMethod, uninstallMethod, reinstallMethod, deleteMethod, reloadMethod, openFolderMethod):
         super().__init__()
 
         self.ui = Ui_Mods()
@@ -128,8 +128,9 @@ class Mods(QWidget):
 
         self.modsActions.install.clicked.connect(installMethod)
         self.modsActions.uninstall.clicked.connect(uninstallMethod)
-        self.modsActions.reinstall.clicked.connect(reinstallMod)
-        self.ui.reloadModsList.clicked.connect(lambda: [self.removeAllMods(), reloadMethod()])
+        self.modsActions.reinstall.clicked.connect(reinstallMethod)
+        self.modsActions.deleteMod.clicked.connect(deleteMethod)
+        self.ui.reloadModsList.clicked.connect(reloadMethod)
         self.ui.openModsFolderButton.clicked.connect(openFolderMethod)
 
         self.ui.searchArea.textChanged.connect(self.searchEvent)
@@ -296,7 +297,8 @@ class Mods(QWidget):
         self.modsActions.deleteMod.setParent(None)
 
         if modClass.installed:
-            AddToFrame(self.modsActions.mainFrame, self.modsActions.reinstall)
+            if modClass.modFileExist:
+                AddToFrame(self.modsActions.mainFrame, self.modsActions.reinstall)
             AddToFrame(self.modsActions.mainFrame, self.modsActions.uninstall)
         elif modClass.modFileExist:
             AddToFrame(self.modsActions.mainFrame, self.modsActions.install)
@@ -370,6 +372,6 @@ class Mods(QWidget):
             del modButton
         self.modsButtons.clear()
 
-        for mod in self.mods.values():
-            del mod
+        for modClass in self.mods.values():
+            del modClass
         self.mods.clear()
