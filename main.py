@@ -1,36 +1,46 @@
 import os
 import sys
+import threading
+import webbrowser
 
 import core
 from core import NotificationType, Environment
 
-from PySide6.QtCore import QTimer
-from PySide6.QtGui import QFontDatabase
+from PySide6.QtCore import QSize, QTranslator, QLocale, QTimer, Signal
+from PySide6.QtGui import QIcon, QFontDatabase
+from PySide6.QtWidgets import QMainWindow, QApplication
 
 from ui.ui_handler.window import Window
 from ui.ui_handler.header import HeaderFrame
 from ui.ui_handler.loading import Loading
 from ui.ui_handler.mods import Mods
 from ui.ui_handler.progressdialog import ProgressDialog
+from ui.ui_handler.buttonsdialog import ButtonsDialog
 from ui.ui_handler.acceptdialog import AcceptDialog
 
-from PySide6.QtCore import *  # type: ignore
-from PySide6.QtGui import *  # type: ignore
-from PySide6.QtWidgets import *  # type: ignore
-
 from ui.utils.layout import ClearFrame, AddToFrame
+from ui.utils.version import GetLatest, GITHUB, REPO
 
 import ui.ui_sources.translate as translate
 
 
-if getattr(sys, "frozen", False):
-    try:
-        import pyi_splash
-        import time
-        pyi_splash.update_text("application")
-        pyi_splash.close()
-    except:
-        pass
+def InitWindowSetText(text):
+    if getattr(sys, "frozen", False):
+        try:
+            import pyi_splash
+            pyi_splash.update_text(text)
+        except:
+            pass
+
+
+def InitWindowClose():
+    if getattr(sys, "frozen", False):
+        try:
+            import pyi_splash
+            pyi_splash.update_text("application")
+            pyi_splash.close()
+        except:
+            pass
 
 
 class MainWindow(QMainWindow):
@@ -44,23 +54,26 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Brawlhalla ModLoader")
         self.setWindowIcon(QIcon(':/icons/resources/icons/App.ico'))
 
+        InitWindowSetText("core libs")
         self.controller = core.Controller()
         self.controller.setModsPath(self.modsPath)
         self.controller.reloadMods()
         self.controller.getModsData()
+        InitWindowClose()
 
         self.loading = Loading()
-        self.header = HeaderFrame()
+        self.header = HeaderFrame(githubMethod=lambda: webbrowser.open(f"{GITHUB}/{REPO}"))
         self.mods = Mods(installMethod=self.installMod,
                          uninstallMethod=self.uninstallMod,
-                         reinstallMod=self.reinstallMod,
+                         reinstallMethod=self.reinstallMod,
+                         deleteMethod=self.deleteMod,
                          reloadMethod=self.reloadMods,
                          openFolderMethod=self.openModsFolder)
         self.progressDialog = ProgressDialog(self)
+        self.buttonsDialog = ButtonsDialog(self)
         self.acceptDialog = AcceptDialog(self)
 
         self.setLoadingScreen()
-        self.loading.setText("Loading mods...")
 
         self.controllerGetterTimer = QTimer()
         self.controllerGetterTimer.timeout.connect(self.controllerGet)  # connect it to your update function
@@ -68,6 +81,9 @@ class MainWindow(QMainWindow):
 
         # self.resize(QSize(1280, 720))
         self.setMinimumSize(QSize(850, 550))
+
+        self.versionSignal.connect(self.newVersion)
+        threading.Thread(target=self.checkNewVersion).start()
 
     def controllerGet(self):
         data = self.controller.getData()
@@ -218,8 +234,8 @@ class MainWindow(QMainWindow):
 
     def setLoadingScreen(self):
         ClearFrame(self.ui.mainFrame)
-
         AddToFrame(self.ui.mainFrame, self.loading)
+        self.loading.setText("Loading mods sources...")
 
     def setModsScreen(self):
         ClearFrame(self.ui.mainFrame)
@@ -243,22 +259,60 @@ class MainWindow(QMainWindow):
             self.controller.uninstallMod(modClass.hash)
             self.controller.getModConflict(modClass.hash)
 
+    def deleteMod(self):
+        if self.mods.selectedModButton is not None:
+            modClass = self.mods.selectedModButton.modClass
+
+            self.buttonsDialog.deleteButtons()
+            self.buttonsDialog.setTitle(f"Delete mod '{modClass.name}'")
+
+            if modClass.installed:
+                self.buttonsDialog.setContent("To delete mod, you need to uninstall it")
+            elif modClass.modFileExist:
+                self.buttonsDialog.setContent("")
+                self.buttonsDialog.addButton("Delete", self._deleteMod)
+
+            self.buttonsDialog.addButton("Cancel", self.buttonsDialog.hide)
+
+            self.buttonsDialog.show()
+
     def reloadMods(self):
         self.setLoadingScreen()
+        self.mods.removeAllMods()
         self.controller.reloadMods()
         self.controller.getModsData()
 
     def openModsFolder(self):
         os.startfile(self.modsPath)
 
+    def _deleteMod(self):
+        modClass = self.mods.selectedModButton.modClass
+        modClass.modFileExist = False
+        self.controller.deleteMod(modClass.hash)
+        self.reloadMods()
+        self.buttonsDialog.hide()
+
     def resizeEvent(self, event):
         self.progressDialog.onResize()
         self.acceptDialog.onResize()
         super().resizeEvent(event)
 
-    # def onResize(self, event):
-    #    self.header.resizeEvent(event)
-    #    pass
+    def newVersion(self, url):
+        self.buttonsDialog.setTitle("New version available")
+        self.buttonsDialog.setContent(url)
+        self.buttonsDialog.deleteButtons()
+        self.buttonsDialog.addButton("GO TO SITE", lambda: [webbrowser.open(url),
+                                                            self.buttonsDialog.hide()])
+        self.buttonsDialog.addButton("CANCEL", self.buttonsDialog.hide)
+        self.buttonsDialog.show()
+
+    versionSignal = Signal(str)
+
+    def checkNewVersion(self):
+        newVersion = GetLatest()
+
+        if newVersion is not None:
+            self.versionSignal.emit(newVersion)
 
 
 # pyrcc5 -o ui/ui_sources/icons_rc.py ui/ui_sources/icons.qrc
