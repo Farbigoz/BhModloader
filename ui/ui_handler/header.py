@@ -152,7 +152,7 @@ class HeaderFrame(QWidget):
     buttonAnimPlus = None
     buttonAnimMinus = None
 
-    def __init__(self):
+    def __init__(self, githubMethod):
         super().__init__()
 
         self.ui = Ui_Header()
@@ -169,7 +169,7 @@ class HeaderFrame(QWidget):
                                                  self.ui.settingsLine,
                                                  self.ui.settingsButtonFrame)
 
-        self.headerGithubButton = HeaderIconButton(self.ui.githubButton)
+        self.headerGithubButton = HeaderIconButton(self.ui.githubButton, githubMethod)
         self.headerSupportButton = HeaderIconButton(self.ui.supportButton)
         self.headerLanguageButton = HeaderIconButton(self.ui.languageButton)
         self.headerInfoButton = HeaderIconButton(self.ui.infoButton)
