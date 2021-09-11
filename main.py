@@ -80,6 +80,7 @@ class MainWindow(QMainWindow):
         self.controllerGetterTimer.start(10)
 
         # self.resize(QSize(1280, 720))
+        self.resize(QSize(1051, 747))
         self.setMinimumSize(QSize(850, 550))
 
         self.versionSignal.connect(self.newVersion)
@@ -335,12 +336,14 @@ if __name__ == "__main__":
     font_db.addApplicationFont(":/fonts/resources/fonts/Roboto/Roboto-MediumItalic.ttf")
     font_db.addApplicationFont(":/fonts/resources/fonts/Roboto/Roboto-Regular.ttf")
 
+    """
     translator = QTranslator()
     lang = QLocale.system().name()
     supportedLangs = translate.GetLangs()
     if lang in supportedLangs:
         translator.load(supportedLangs[lang])
     app.installTranslator(translator)
+    """
 
     window = MainWindow()
     window.show()
