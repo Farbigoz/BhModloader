@@ -26,9 +26,6 @@ class ModButton(QWidget):
 
         self.ui.background.installEventFilter(self)
 
-        #if not self.buttons:
-        #    self.select()
-
         self.buttons.append(self)
 
     def updateData(self):
@@ -58,10 +55,16 @@ class ModButton(QWidget):
             if parent is None:
                 return False
 
-        metrics = QFontMetrics(self.ui.modName.font())
-        elided = metrics.elidedText(self.modClass.name, Qt.ElideRight, parent.width() - 100)
+        versionWidth = self.ui.gameVersion.fontMetrics().boundingRect(self.ui.gameVersion.text()).width()
+
+        elided = self.ui.modName.fontMetrics().elidedText(self.modClass.name,
+                                                          Qt.ElideRight, parent.width() - 60 - versionWidth)
         self.ui.modName.setText(elided)
         self.ui.modName.setMaximumWidth(parent.width() - 100)
+
+        elided = self.ui.modAuthor.fontMetrics().elidedText(f"Author: {self.modClass.author}",
+                                                            Qt.ElideRight, parent.width() - 50)
+        self.ui.modAuthor.setText(elided)
 
     def select(self):
         if self.pressed:
