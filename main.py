@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         self.controllerGetterTimer.timeout.connect(self.controllerGet)  # connect it to your update function
         self.controllerGetterTimer.start(10)
 
-        # self.resize(QSize(1280, 720))
+        # self.resize(QSize(977, 550))
         self.setMinimumSize(QSize(850, 550))
 
         self.versionSignal.connect(self.newVersion)
@@ -321,7 +321,7 @@ class MainWindow(QMainWindow):
 # venv\Lib\site-packages\PySide6\lrelease.exe E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\translate\header\ru_RU.ts
 
 
-if __name__ == "__main__":
+def RunApp():
     app = QApplication(sys.argv)
 
     font_db = QFontDatabase()
@@ -347,3 +347,7 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    RunApp()
