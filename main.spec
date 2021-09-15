@@ -74,7 +74,7 @@ app_exe = EXE(app_pyz,
               upx_exclude=['vcruntime140.dll', 'ucrtbase.dll'],
               runtime_tmpdir=None,
               version='version.spec',
-              console=True,
+              console=False,
               icon='ui/ui_sources/resources/icons/App.ico')
 
 #os.remove(client_exe.name)
