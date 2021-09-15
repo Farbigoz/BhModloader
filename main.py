@@ -120,8 +120,6 @@ class Queue:
 
 
 class ModLoader(QMainWindow):
-    _app = None
-
     importQueue = Queue()
 
     modsPath = os.path.join(os.getcwd(), "Mods")
@@ -171,7 +169,7 @@ class ModLoader(QMainWindow):
         self.importQueue.setUrlSignal(self.queueUrlSignal)
         self.importQueue.setFileSignal(self.queueFileSignal)
 
-        self.__class__._app = self
+        self.setForeground()
 
     def controllerGet(self):
         data = self.controller.getData()
@@ -432,6 +430,14 @@ class ModLoader(QMainWindow):
             newVersion, fileUrl, version, body = latest
             self.versionSignal.emit(newVersion, fileUrl, version, body)
 
+    def setForeground(self):
+        if sys.platform.startswith("win"):
+            import win32gui, win32com.client
+
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shell.SendKeys('%')
+            win32gui.SetForegroundWindow(self.winId())
+
     queueFileSignal = Signal()
 
     def queueFile(self):
@@ -439,6 +445,8 @@ class ModLoader(QMainWindow):
             self.fileImport(file)
 
     def fileImport(self, filePath: str):
+        self.setForeground()
+
         if os.path.abspath(filePath).startswith(os.path.abspath(self.modsPath)):
             return
 
@@ -464,6 +472,8 @@ class ModLoader(QMainWindow):
             self.urlImport(url)
 
     def urlImport(self, url: str):
+        self.setForeground()
+
         data = url.split(":", 1)[1].strip("/")
         splitData = data.split(",")
 

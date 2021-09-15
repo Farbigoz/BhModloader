@@ -238,6 +238,7 @@ def InstallUrlRegistry():
     winreg.CloseKey(shell_open_command)
 
 
+# Server for ModloaderClient.exe
 def MLServer(mlserver: socket, app):
     def handle(_mlclient: socket, app):
         data = _mlclient.recv(3)
