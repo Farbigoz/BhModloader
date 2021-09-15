@@ -1,7 +1,15 @@
 import os
 import sys
+import time
+import urllib
+import zipfile
 import threading
 import webbrowser
+import subprocess
+import multiprocessing
+
+# (https://stackoverflow.com/questions/9144724/unknown-encoding-idna-in-python-requests)
+import encodings.idna
 
 import core
 from core import NotificationType, Environment
@@ -20,6 +28,7 @@ from ui.ui_handler.acceptdialog import AcceptDialog
 
 from ui.utils.layout import ClearFrame, AddToFrame
 from ui.utils.version import GetLatest, GITHUB, REPO
+from ui.utils.textformater import TextFormatter
 
 import ui.ui_sources.translate as translate
 
@@ -43,7 +52,78 @@ def InitWindowClose():
             pass
 
 
-class MainWindow(QMainWindow):
+class Queue:
+    def __init__(self):
+        self.urlQueue = []
+        self.signalUrl = None
+        self._readUrlQueue = False
+
+        self.fileQueue = []
+        self.signalFile = None
+        self._readFileQueue = False
+
+    def setUrlSignal(self, signalUrl):
+        self.signalUrl = signalUrl
+
+    def _emitUrl(self):
+        while True:
+            try:
+                if self.signalUrl is None:
+                    time.sleep(0.1)
+                else:
+                    self.signalUrl.emit()
+                    break
+            except:
+                time.sleep(0.1)
+
+    def addUrl(self, url):
+        self.urlQueue.append(url)
+
+        if not self._readUrlQueue:
+            threading.Thread(target=self._emitUrl).start()
+
+    def iterUrl(self):
+        self._readUrlQueue = True
+
+        while self.urlQueue:
+            yield self.urlQueue.pop(0)
+
+        self._readUrlQueue = False
+
+    def setFileSignal(self, signalFile):
+        self.signalFile = signalFile
+
+    def _emitFile(self):
+        while True:
+            try:
+                if self.signalFile is None:
+                    time.sleep(0.1)
+                else:
+                    self.signalFile.emit()
+                    break
+            except:
+                time.sleep(0.1)
+
+    def addFile(self, file):
+        self.fileQueue.append(file)
+
+        if not self._readFileQueue:
+            threading.Thread(target=self._emitFile).start()
+
+    def iterFile(self):
+        self._readFileQueue = True
+
+        while self.fileQueue:
+            yield self.fileQueue.pop(0)
+
+        self._readFileQueue = False
+
+
+class ModLoader(QMainWindow):
+    _app = None
+
+    importQueue = Queue()
+
     modsPath = os.path.join(os.getcwd(), "Mods")
 
     def __init__(self):
@@ -84,6 +164,14 @@ class MainWindow(QMainWindow):
 
         self.versionSignal.connect(self.newVersion)
         threading.Thread(target=self.checkNewVersion).start()
+
+        self.queueUrlSignal.connect(self.queueUrl)
+        self.queueFileSignal.connect(self.queueFile)
+
+        self.importQueue.setUrlSignal(self.queueUrlSignal)
+        self.importQueue.setFileSignal(self.queueFileSignal)
+
+        self.__class__._app = self
 
     def controllerGet(self):
         data = self.controller.getData()
@@ -188,6 +276,9 @@ class MainWindow(QMainWindow):
 
                 self.progressDialog.hide()
 
+        elif cmd == Environment.ReloadMods:
+            self.mods.removeAllMods()
+
         elif cmd == Environment.GetModsData:
             for modData in data[1]:
                 self.mods.addMod(gameVersion=modData.get("gameVersion", ""),
@@ -268,7 +359,7 @@ class MainWindow(QMainWindow):
 
             if modClass.installed:
                 self.buttonsDialog.setContent("To delete mod, you need to uninstall it")
-            elif modClass.modFileExist:
+            else:
                 self.buttonsDialog.setContent("")
                 self.buttonsDialog.addButton("Delete", self._deleteMod)
 
@@ -278,7 +369,7 @@ class MainWindow(QMainWindow):
 
     def reloadMods(self):
         self.setLoadingScreen()
-        self.mods.removeAllMods()
+        #self.mods.removeAllMods()
         self.controller.reloadMods()
         self.controller.getModsData()
 
@@ -295,6 +386,7 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         self.progressDialog.onResize()
         self.acceptDialog.onResize()
+        self.buttonsDialog.onResize()
         super().resizeEvent(event)
 
     def newVersion(self, url):
@@ -314,6 +406,77 @@ class MainWindow(QMainWindow):
         if newVersion is not None:
             self.versionSignal.emit(newVersion)
 
+    queueFileSignal = Signal()
+
+    def queueFile(self):
+        for file in self.importQueue.iterFile():
+            self.fileImport(file)
+
+    def fileImport(self, filePath: str):
+        if os.path.abspath(filePath).startswith(os.path.abspath(self.modsPath)):
+            return
+
+        fileName = os.path.split(filePath)[1]
+        fileNameSplit = os.path.splitext(fileName)
+
+        if os.path.exists(os.path.join(self.modsPath, fileName)):
+            i = 1
+            while os.path.exists(os.path.join(self.modsPath, f"{fileNameSplit[0]} ({i}){fileNameSplit[1]}")):
+                i += 1
+            fileName = f"{fileNameSplit[0]} ({i}){fileNameSplit[1]}"
+
+        with open(filePath, "rb") as outsideMod:
+            with open(os.path.join(self.modsPath, fileName), "wb") as insideMod:
+                insideMod.write(outsideMod.read())
+
+        self.reloadMods()
+
+    queueUrlSignal = Signal()
+
+    def queueUrl(self):
+        for url in self.importQueue.iterUrl():
+            self.urlImport(url)
+
+    def urlImport(self, url: str):
+        data = url.split(":", 1)[1].strip("/")
+        splitData = data.split(",")
+
+        if len(splitData) == 3:
+            tag, modId, dlId = data.split(",")
+            zipUrl = f"http://gamebanana.com/dl/{dlId}"
+        else:
+            zipUrl = ""
+
+        zipPath = os.path.join(self.modsPath, "_mod.zip")
+
+        self.progressDialog.setMaximum(100)
+        self.progressDialog.setTitle("Download mod")
+        self.progressDialog.setContent("")
+        self.progressDialog.show()
+        QApplication.processEvents()
+        try:
+            urllib.request.urlretrieve(zipUrl, zipPath, self.handleUpdateApp)
+
+            with zipfile.ZipFile(zipPath, 'r') as modZip:
+                for file in modZip.namelist():
+                    if file.endswith(f".{core.MOD_FILE_FORMAT}"):
+                        self.progressDialog.setContent(f"Extract: '{file}'")
+                        QApplication.processEvents()
+                        modZip.extract(file, self.modsPath)
+
+            os.remove(zipPath)
+
+            self.reloadMods()
+        except:
+            print("Error unpack mod zip")
+
+        finally:
+            self.progressDialog.hide()
+
+        print("Url:", url)
+
+        #bmod://Mod,321718,658341
+
 
 # pyrcc5 -o ui/ui_sources/icons_rc.py ui/ui_sources/icons.qrc
 # venv\Lib\site-packages\PySide6\lupdate.exe @ui/ui_sources/ui_files.txt -ts ui/ui_sources/translate/header/ru_RU.ts
@@ -321,7 +484,7 @@ class MainWindow(QMainWindow):
 # venv\Lib\site-packages\PySide6\lrelease.exe E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\translate\header\ru_RU.ts
 
 
-def RunApp():
+def RunApp(mlserver=None):
     app = QApplication(sys.argv)
 
     font_db = QFontDatabase()
@@ -344,9 +507,11 @@ def RunApp():
     app.installTranslator(translator)
     """
 
-    window = MainWindow()
+    window = ModLoader()
     window.show()
-    sys.exit(app.exec())
+    os.kill(multiprocessing.current_process().pid, app.exec())
+    if mlserver is not None:
+        mlserver.close()
 
 
 if __name__ == "__main__":
