@@ -389,22 +389,48 @@ class ModLoader(QMainWindow):
         self.buttonsDialog.onResize()
         super().resizeEvent(event)
 
-    def newVersion(self, url):
-        self.buttonsDialog.setTitle("New version available")
-        self.buttonsDialog.setContent(url)
+    versionSignal = Signal(str, str, str, str)
+
+    def newVersion(self, url: str, fileUrl: str, version: str, body: str):
+        self.buttonsDialog.setTitle(f"New version available '{version}'")
+        self.buttonsDialog.setContent(TextFormatter.format(body))
         self.buttonsDialog.deleteButtons()
-        self.buttonsDialog.addButton("GO TO SITE", lambda: [webbrowser.open(url),
-                                                            self.buttonsDialog.hide()])
+        self.buttonsDialog.addButton("GO TO SITE", lambda: webbrowser.open(url))
+        self.buttonsDialog.addButton("UPDATE", lambda: [self.buttonsDialog.hide(),
+                                                        self.updateApp(fileUrl, version)])
         self.buttonsDialog.addButton("CANCEL", self.buttonsDialog.hide)
         self.buttonsDialog.show()
 
-    versionSignal = Signal(str)
+    def handleUpdateApp(self, blocknum, blocksize, totalsize):
+        readedData = blocknum * blocksize
+
+        if totalsize > 0:
+            downloadPercentage = int(readedData * 100 / totalsize)
+            self.progressDialog.setValue(downloadPercentage)
+            QApplication.processEvents()
+
+    def updateApp(self, fileUrl: str, version: str):
+        filePath = os.path.join(os.getcwd(), "temp.exe")
+        fileName = os.path.split(fileUrl)[1]
+
+        self.progressDialog.setMaximum(100)
+        self.progressDialog.setTitle(f"Update ModLoader to '{version}'")
+        self.progressDialog.setContent(f"Download '{fileName}'")
+        self.progressDialog.show()
+        urllib.request.urlretrieve(fileUrl, filePath, self.handleUpdateApp)
+        self.progressDialog.hide()
+
+        subprocess.Popen([os.environ["CLIENT_PATH"], "-update",
+                         os.path.abspath(sys.argv[0]),
+                         filePath])
+        QApplication.exit(0)
 
     def checkNewVersion(self):
-        newVersion = GetLatest()
+        latest = GetLatest()
 
-        if newVersion is not None:
-            self.versionSignal.emit(newVersion)
+        if latest is not None:
+            newVersion, fileUrl, version, body = latest
+            self.versionSignal.emit(newVersion, fileUrl, version, body)
 
     queueFileSignal = Signal()
 

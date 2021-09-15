@@ -1,3 +1,4 @@
+import re
 import sys
 import json
 import urllib.request
@@ -31,17 +32,6 @@ if sys.platform in ["win32", "win64"]:
         VERSION = fileProperties["FileVersion"]
         PRERELEASE = bool(fileProperties["FileFlags"] & 0x2)
 
-elif sys.platform == "darwin":
-    def GetFileProperties(executable):
-        props = {"FileVersion": None, "FileFlags": None}
-        return props
-
-
-    if getattr(sys, 'frozen', False):
-        fileProperties = GetFileProperties(sys.executable)
-        VERSION = fileProperties["FileVersion"]
-        PRERELEASE = fileProperties["FileFlags"]
-
 else:
     def GetFileProperties(executable):
         props = {"FileVersion": None, "FileFlags": None}
@@ -59,6 +49,23 @@ if not getattr(sys, 'frozen', False):
     PRERELEASE = True
 
 
+def GetDownloadUrl(assets):
+    for asset in assets:
+        if sys.platform.startswith("win"):
+            if asset.get("name", "").endswith(".exe"):
+                return asset.get("browser_download_url", None)
+
+
+def _getLatest(latest):
+    bodySplit = re.findall("###[^#]+", latest.get("body", ""))
+    body = "\n".join([re.sub(r"### ([^\n\r]+)",
+                             r'<size="20px">\1<void>',
+                             frame.strip())
+                      for frame in bodySplit])
+    return latest.get("html_url", None), GetDownloadUrl(latest.get("assets", [])), \
+           latest.get("name", None), body
+
+
 def GetLatest():
     if VERSION is None:
         return None
@@ -71,11 +78,12 @@ def GetLatest():
 
     if json_payload:
         latest = json_payload[0]
+
         if latest.get("prerelease", False):
             if PRERELEASE:
                 tag_name = latest.get("tag_name", None)
                 if tag_name is not None and tag_name != VERSION:
-                    return latest.get("html_url", None)
+                    return _getLatest(latest)
                 else:
                     return None
             else:
@@ -88,4 +96,6 @@ def GetLatest():
 
         tag_name = latest.get("tag_name", None)
         if tag_name is not None and tag_name != VERSION:
-            return latest.get("html_url", None)
+            return _getLatest(latest)
+        else:
+            return None
