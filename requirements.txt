@@ -1,2 +1,6 @@
 jpype1
 pywin32
+PySide6
+psutil
+rarfile
+py7zr

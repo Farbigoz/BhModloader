@@ -1,7 +1,9 @@
 import os
 import sys
 import time
+import py7zr
 import urllib
+import rarfile
 import zipfile
 import threading
 import webbrowser
@@ -482,8 +484,9 @@ class ModLoader(QMainWindow):
             zipUrl = f"http://gamebanana.com/dl/{dlId}"
         else:
             zipUrl = ""
+            return
 
-        zipPath = os.path.join(self.modsPath, "_mod.zip")
+        archivePath = os.path.join(self.modsPath, "_mod.archive")
 
         self.progressDialog.setMaximum(100)
         self.progressDialog.setTitle("Download mod")
@@ -491,20 +494,40 @@ class ModLoader(QMainWindow):
         self.progressDialog.show()
         QApplication.processEvents()
         try:
-            urllib.request.urlretrieve(zipUrl, zipPath, self.handleUpdateApp)
+            urllib.request.urlretrieve(zipUrl, archivePath, self.handleUpdateApp)
 
-            with zipfile.ZipFile(zipPath, 'r') as modZip:
-                for file in modZip.namelist():
-                    if file.endswith(f".{core.MOD_FILE_FORMAT}"):
-                        self.progressDialog.setContent(f"Extract: '{file}'")
-                        QApplication.processEvents()
-                        modZip.extract(file, self.modsPath)
+            with open(archivePath, "rb") as file:
+                _signature = file.read(3)
 
-            os.remove(zipPath)
+            if _signature.startswith(b"7z"):
+                with py7zr.SevenZipFile(archivePath) as mod7z:
+                    for file in mod7z.getnames():
+                        if file.endswith(f".{core.MOD_FILE_FORMAT}"):
+                            self.progressDialog.setContent(f"Extract: '{file}'")
+                            QApplication.processEvents()
+                            mod7z.extract(self.modsPath, [file])
+
+            elif _signature.startswith(b"Rar"):
+                with rarfile.RarFile(archivePath) as modRar:
+                    for file in modRar.namelist():
+                        if file.endswith(f".{core.MOD_FILE_FORMAT}"):
+                            self.progressDialog.setContent(f"Extract: '{file}'")
+                            QApplication.processEvents()
+                            modRar.extract(file, self.modsPath)
+
+            elif _signature.startswith(b"PK"):
+                with zipfile.ZipFile(archivePath) as modZip:
+                    for file in modZip.namelist():
+                        if file.endswith(f".{core.MOD_FILE_FORMAT}"):
+                            self.progressDialog.setContent(f"Extract: '{file}'")
+                            QApplication.processEvents()
+                            modZip.extract(file, self.modsPath)
+
+            os.remove(archivePath)
 
             self.reloadMods()
-        except:
-            print("Error unpack mod zip")
+        except Exception as e:
+            print("Error unpack mod zip\n", e)
 
         finally:
             self.progressDialog.hide()

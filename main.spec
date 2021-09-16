@@ -45,7 +45,9 @@ app_a = Analysis(['run.py'],
                  win_no_prefer_redirects=False,
                  win_private_assemblies=False,
                  noarchive=True)
-app_a.datas += [('file_icon.ico','file_icon.ico','DATA'), (os.path.split(client_exe.name)[1], client_exe.name, 'DATA')]
+app_a.datas += [('file_icon.ico','file_icon.ico','DATA'),
+                (os.path.split(client_exe.name)[1], client_exe.name, 'DATA'),
+                ('unrar.exe', 'libs\\unrar.exe', 'DATA')]
 
 app_pyz = PYZ(app_a.pure, app_a.zipped_data)
 
