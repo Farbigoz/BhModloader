@@ -13,8 +13,10 @@ import multiprocessing
 # (https://stackoverflow.com/questions/9144724/unknown-encoding-idna-in-python-requests)
 import encodings.idna
 
+from typing import List
+
 import core
-from core import NotificationType, Environment
+from core import NotificationType, Environment, Notification
 
 from PySide6.QtCore import QSize, QTranslator, QLocale, QTimer, Signal
 from PySide6.QtGui import QIcon, QFontDatabase
@@ -54,7 +56,7 @@ def InitWindowClose():
             pass
 
 
-class Queue:
+class ImportQueue:
     def __init__(self):
         self.urlQueue = []
         self.signalUrl = None
@@ -122,9 +124,11 @@ class Queue:
 
 
 class ModLoader(QMainWindow):
-    importQueue = Queue()
+    importQueue = ImportQueue()
 
     modsPath = os.path.join(os.getcwd(), "Mods")
+
+    errors: List[Notification] = []
 
     def __init__(self):
         super().__init__()
@@ -251,6 +255,8 @@ class ModLoader(QMainWindow):
                 self.mods.selectedModButton.updateData()
                 self.progressDialog.hide()
 
+                self.showErrors()
+
             # Uninstalling
             elif ntype == NotificationType.UninstallingModSwf:
                 modHash, swfName = notification.args
@@ -275,6 +281,25 @@ class ModLoader(QMainWindow):
                 self.mods.selectedModButton.updateData()
 
                 self.progressDialog.hide()
+                self.showErrors()
+
+            elif ntype in [NotificationType.CompileModSourcesSpriteHasNoSymbolclass,  # Compiler
+                           NotificationType.CompileModSourcesSpriteEmpty,
+                           NotificationType.CompileModSourcesSpriteNotFoundInFolder,
+                           NotificationType.CompileModSourcesUnsupportedCategory,
+                           NotificationType.CompileModSourcesUnknownFile,
+                           NotificationType.CompileModSourcesSaveError,
+                           NotificationType.LoadingModIsEmpty,  # Loader
+                           NotificationType.InstallingModNotFoundFileElement,  # Installer
+                           NotificationType.InstallingModNotFoundGameSwf,
+                           NotificationType.InstallingModSwfScriptError,
+                           NotificationType.InstallingModSwfSoundSymbolclassNotExist,
+                           NotificationType.InstallingModSoundNotExist,
+                           NotificationType.InstallingModSwfSpriteSymbolclassNotExist,
+                           NotificationType.InstallingModSpriteNotExist,
+                           NotificationType.UninstallingModSwfOriginalElementNotFound,  # Uninstaller
+                           NotificationType.UninstallingModSwfElementNotFound]:
+                self.errors.append(notification)
 
         elif cmd == Environment.ReloadMods:
             self.mods.removeAllMods()
@@ -295,6 +320,7 @@ class ModLoader(QMainWindow):
                                  modFileExist=modData.get("modFileExist", False))
 
             self.setModsScreen()
+            self.showErrors()
 
         elif cmd == Environment.GetModConflict:
             searching, modHash = data[1]
@@ -322,6 +348,65 @@ class ModLoader(QMainWindow):
 
         else:
             print(f"Controller <- {str(data)}\n", end="")
+
+    def showErrors(self):
+        if self.errors:
+            errors = []
+            errorsNotifications = self.errors.copy()
+            self.errors.clear()
+
+            for notif in errorsNotifications:
+                ntype = notif.notificationType
+                string = ""
+
+                # Loader
+                if ntype == NotificationType.LoadingModIsEmpty:
+                    string = f"Mod '{notif.args[1]}' is empty"
+
+                # Installer
+                elif ntype == NotificationType.InstallingModNotFoundFileElement:
+                    string = f"Not found element '{notif.args[1]}' in bmod "
+
+                elif ntype == NotificationType.InstallingModNotFoundGameSwf:
+                    string = f"Not found game file '{notif.args[1]}'"
+
+                elif ntype == NotificationType.InstallingModSwfScriptError:
+                    string = f"Script '{notif.args[1]}' not installed"
+
+                elif ntype == NotificationType.InstallingModSwfSoundSymbolclassNotExist:
+                    string = f"Not found sound '{notif.args[1]}' in '{notif.args[2]}'"
+
+                elif ntype == NotificationType.InstallingModSoundNotExist:
+                    string = f"Not found sound '{notif.args[1]} ({notif.args[2]})' in '{notif.args[3]}'"
+
+                elif ntype == NotificationType.InstallingModSwfSpriteSymbolclassNotExist:
+                    string = f"Not found sprite '{notif.args[1]}' in '{notif.args[2]}'"
+
+                elif ntype == NotificationType.InstallingModSpriteNotExist:
+                    string = f"Not found sprite '{notif.args[1]} ({notif.args[2]})' in '{notif.args[3]}'"
+
+                # Uninstaller
+                elif ntype == NotificationType.UninstallingModSwfOriginalElementNotFound:
+                    string = f"Not found orig element '{notif.args[1]}' in '{notif.args[2]}'"
+
+                elif ntype == NotificationType.UninstallingModSwfElementNotFound:
+                    string = f"Not found mod element '{notif.args[1]}' in '{notif.args[2]}'"
+
+                if string:
+                    errors.append(string)
+                else:
+                    errors.append(repr(notif))
+
+            if errors:
+                self.buttonsDialog.setTitle("Errors:")
+
+                string = ""
+                for error in errors:
+                    string += f"{error}\n"
+
+                self.buttonsDialog.setContent(string)
+                self.buttonsDialog.setButtons([("Ok", self.buttonsDialog.hide)])
+                self.buttonsDialog.show()
 
     def setLoadingScreen(self):
         ClearFrame(self.ui.mainFrame)
@@ -534,10 +619,6 @@ class ModLoader(QMainWindow):
 
         finally:
             self.progressDialog.hide()
-
-        print("Url:", url)
-
-        #bmod://Mod,321718,658341
 
 
 # pyrcc5 -o ui/ui_sources/icons_rc.py ui/ui_sources/icons.qrc
