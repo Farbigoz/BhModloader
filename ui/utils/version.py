@@ -8,8 +8,11 @@ GITHUB = "https://github.com"
 GITHUB_API = "https://api.github.com"
 REPO = "Farbigoz/BhModloader"
 
+VERSION = "0.0.0"
+GIT_VERSION = None
+PRERELEASE = True
 
-if sys.platform in ["win32", "win64"]:
+if sys.platform.startswith("win"):
     import win32api
 
     def GetFileProperties(executable):
@@ -17,6 +20,9 @@ if sys.platform in ["win32", "win64"]:
 
         try:
             fixedInfo = win32api.GetFileVersionInfo(executable, '\\')
+            props['ProductVersion'] = "{}.{}.{}".format(fixedInfo["ProductVersionMS"] >> 16,
+                                                        fixedInfo["ProductVersionMS"] & 65535,
+                                                        fixedInfo["ProductVersionLS"] >> 16)
             props['FileFlags'] = fixedInfo["FileFlags"]
             lang, codepage = win32api.GetFileVersionInfo(executable, '\\VarFileInfo\\Translation')[0]
             props['FileVersion'] = win32api.GetFileVersionInfo(executable, u'\\StringFileInfo\\%04X%04X\\FileVersion' %
@@ -29,24 +35,21 @@ if sys.platform in ["win32", "win64"]:
 
     if getattr(sys, 'frozen', False):
         fileProperties = GetFileProperties(sys.executable)
-        VERSION = fileProperties["FileVersion"]
+        VERSION = fileProperties["ProductVersion"]
+        GIT_VERSION = fileProperties["FileVersion"]
         PRERELEASE = bool(fileProperties["FileFlags"] & 0x2)
 
 else:
     def GetFileProperties(executable):
-        props = {"FileVersion": None, "FileFlags": None}
+        props = {"FileVersion": None, "FileFlags": None, "ProductVersion": None}
         return props
 
 
     if getattr(sys, 'frozen', False):
         fileProperties = GetFileProperties(sys.executable)
-        VERSION = fileProperties["FileVersion"]
+        VERSION = fileProperties["ProductVersion"]
+        GIT_VERSION = fileProperties["FileVersion"]
         PRERELEASE = fileProperties["FileFlags"]
-
-
-if not getattr(sys, 'frozen', False):
-    VERSION = None
-    PRERELEASE = True
 
 
 def GetDownloadUrl(assets):
@@ -59,7 +62,7 @@ def GetDownloadUrl(assets):
 def _getLatest(latest):
     bodySplit = re.findall("###[^#]+", latest.get("body", ""))
     body = "\n".join([re.sub(r"### ([^\n\r]+)",
-                             r'<size="16px">\1<void>',
+                             r'<size="14px">\1<void>',
                              frame.strip())
                       for frame in bodySplit])
     return latest.get("html_url", None), GetDownloadUrl(latest.get("assets", [])), \
@@ -67,7 +70,7 @@ def _getLatest(latest):
 
 
 def GetLatest():
-    if VERSION is None:
+    if GIT_VERSION is None:
         return None
 
     try:
@@ -82,7 +85,7 @@ def GetLatest():
         if latest.get("prerelease", False):
             if PRERELEASE:
                 tag_name = latest.get("tag_name", None)
-                if tag_name is not None and tag_name != VERSION:
+                if tag_name is not None and tag_name != GIT_VERSION:
                     return _getLatest(latest)
                 else:
                     return None
@@ -95,7 +98,7 @@ def GetLatest():
                     return None
 
         tag_name = latest.get("tag_name", None)
-        if tag_name is not None and tag_name != VERSION:
+        if tag_name is not None and tag_name != GIT_VERSION:
             return _getLatest(latest)
         else:
             return None
