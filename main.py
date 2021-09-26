@@ -433,12 +433,15 @@ class ModLoader(QMainWindow):
             self.versionSignal.emit(newVersion, fileUrl, version, body)
 
     def setForeground(self):
-        if sys.platform.startswith("win"):
-            import win32gui, win32com.client
+        try:
+            if sys.platform.startswith("win"):
+                import win32gui, win32com.client
 
-            shell = win32com.client.Dispatch("WScript.Shell")
-            shell.SendKeys('%')
-            win32gui.SetForegroundWindow(self.winId())
+                shell = win32com.client.Dispatch("WScript.Shell")
+                shell.SendKeys('%')
+                win32gui.SetForegroundWindow(self.winId())
+        except:
+            pass
 
     queueFileSignal = Signal()
 
@@ -568,9 +571,14 @@ def RunApp(mlserver=None):
 
     window = ModLoader()
     window.show()
-    os.kill(multiprocessing.current_process().pid, app.exec())
+
+    exitId = app.exec()
     if mlserver is not None:
         mlserver.close()
+    for proc in multiprocessing.active_children():
+        proc.kill()
+    os.kill(multiprocessing.current_process().pid, exitId)
+    sys.exit(exitId)
 
 
 if __name__ == "__main__":
