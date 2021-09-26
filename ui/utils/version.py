@@ -59,7 +59,7 @@ def GetDownloadUrl(assets):
 def _getLatest(latest):
     bodySplit = re.findall("###[^#]+", latest.get("body", ""))
     body = "\n".join([re.sub(r"### ([^\n\r]+)",
-                             r'<size="20px">\1<void>',
+                             r'<size="16px">\1<void>',
                              frame.strip())
                       for frame in bodySplit])
     return latest.get("html_url", None), GetDownloadUrl(latest.get("assets", [])), \
