@@ -152,7 +152,7 @@ class HeaderFrame(QWidget):
     buttonAnimPlus = None
     buttonAnimMinus = None
 
-    def __init__(self, githubMethod):
+    def __init__(self, githubMethod, supportMethod, infoMethod):
         super().__init__()
 
         self.ui = Ui_Header()
@@ -170,9 +170,9 @@ class HeaderFrame(QWidget):
                                                  self.ui.settingsButtonFrame)
 
         self.headerGithubButton = HeaderIconButton(self.ui.githubButton, githubMethod)
-        self.headerSupportButton = HeaderIconButton(self.ui.supportButton)
+        self.headerSupportButton = HeaderIconButton(self.ui.supportButton, supportMethod)
         self.headerLanguageButton = HeaderIconButton(self.ui.languageButton)
-        self.headerInfoButton = HeaderIconButton(self.ui.infoButton)
+        self.headerInfoButton = HeaderIconButton(self.ui.infoButton, infoMethod)
 
 
     def setModsButtonPressed(self, method):

@@ -31,10 +31,13 @@ from ui.ui_handler.buttonsdialog import ButtonsDialog
 from ui.ui_handler.acceptdialog import AcceptDialog
 
 from ui.utils.layout import ClearFrame, AddToFrame
-from ui.utils.version import GetLatest, GITHUB, REPO
+from ui.utils.version import GetLatest, GITHUB, REPO, VERSION, GIT_VERSION, PRERELEASE
 from ui.utils.textformater import TextFormatter
 
 import ui.ui_sources.translate as translate
+
+
+SUPPORT_URL = "https://www.patreon.com/bhmodloader"
 
 
 def InitWindowSetText(text):
@@ -146,7 +149,9 @@ class ModLoader(QMainWindow):
         InitWindowClose()
 
         self.loading = Loading()
-        self.header = HeaderFrame(githubMethod=lambda: webbrowser.open(f"{GITHUB}/{REPO}"))
+        self.header = HeaderFrame(githubMethod=lambda: webbrowser.open(f"{GITHUB}/{REPO}"),
+                                  supportMethod=lambda: webbrowser.open(SUPPORT_URL),
+                                  infoMethod=self.showInformation)
         self.mods = Mods(installMethod=self.installMod,
                          uninstallMethod=self.uninstallMod,
                          reinstallMethod=self.reinstallMod,
@@ -419,6 +424,22 @@ class ModLoader(QMainWindow):
         AddToFrame(self.ui.mainFrame, self.header)
         AddToFrame(self.ui.mainFrame, self.mods)
 
+    def showInformation(self):
+        self.buttonsDialog.setTitle("About")
+
+        string = TextFormatter.table([["Product:", "Brawlhalla ModLoader"],
+                                      ["Version:", VERSION],
+                                      ["GitHub tag:", GIT_VERSION or "None"],
+                                      ["Status:", 'Beta' if PRERELEASE else 'Release'],
+                                      ["Homepage:", f"<url=\"{GITHUB}/{REPO}\">{GITHUB}/{REPO}</url>"],
+                                      ["Author:", "I_FabrizioG_I"],
+                                      ["Contacts:", "Discord: I_FabrizioG_I#8111"],
+                                      [None, "VK: vk/fabriziog"]], newLine=False)
+
+        self.buttonsDialog.setContent(TextFormatter.format(string, 11))
+        self.buttonsDialog.setButtons([("Ok", self.buttonsDialog.hide)])
+        self.buttonsDialog.show()
+
     def installMod(self):
         if self.mods.selectedModButton is not None:
             modClass = self.mods.selectedModButton.modClass
@@ -478,7 +499,7 @@ class ModLoader(QMainWindow):
 
     def newVersion(self, url: str, fileUrl: str, version: str, body: str):
         self.buttonsDialog.setTitle(f"New version available '{version}'")
-        self.buttonsDialog.setContent(TextFormatter.format(body))
+        self.buttonsDialog.setContent(TextFormatter.format(body, 11))
         self.buttonsDialog.deleteButtons()
         self.buttonsDialog.addButton("GO TO SITE", lambda: webbrowser.open(url))
         self.buttonsDialog.addButton("UPDATE", lambda: [self.buttonsDialog.hide(),
