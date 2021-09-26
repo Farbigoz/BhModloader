@@ -1,5 +1,7 @@
 import re
 
+from typing import List
+
 
 class TextFormatter:
     mnemonics = {
@@ -44,11 +46,31 @@ class TextFormatter:
         "/plist": "</plist>",
         "el": "<el>",  # Элемент списка
         "/el": "</el>",
-        "tab": "<tab>"
+        "tab": "<tab>",
+        "table": "<table>",  # Таблица
+        "/table": "</table>",
+        "tr": "<tr>",  # Строка таблицы
+        "/tr": "</tr>",
+        "td": "<td>",  # Элемент строки
+        "/td": "</td>"
     }
 
     @classmethod
-    def format(cls, text: str):
+    def table(cls, table: List[List[str]], *, newLine=True):
+        ret = ""
+
+        n = "\n" if newLine else ""
+
+        for row in table:
+            ret += f"<tr>{n}"
+            for el in row:
+                ret += "<td>{}</td>{}".format(el or "\t", n)
+            ret += f"</tr>{n}"
+
+        return f"<table>{n}{ret}</table>"
+
+    @classmethod
+    def format(cls, text: str, textSize="14px"):
         text = text.strip()
 
         for symbol, mnemonic in cls.mnemonics.items():
@@ -122,6 +144,18 @@ class TextFormatter:
                         select = f"</li>"
                     elif tag == "tab":
                         select = "&nbsp;"*4
+                    elif tag == "table":
+                        select = f"<table width=\"100%\">"
+                    elif tag == "/table":
+                        select = f"</table>"
+                    elif tag == "tr":
+                        select = f"<tr>"
+                    elif tag == "/tr":
+                        select = f"</tr>"
+                    elif tag == "td":
+                        select = f"<td>"
+                    elif tag == "/td":
+                        select = f"</td>"
                     elif tag in ["/size", "/color", "/tooltip", "/bgcolor"]:
                         select = "</span>"
                     elif tag in ["/center", "/right"]:
@@ -136,5 +170,5 @@ class TextFormatter:
                 'p {margin-top: 0.1em;'
                 'margin-bottom: 0.1em;}'
                 '</style></head>'
-                f'<body><span style="color:#eeeeee; font-size:14px">\n{"".join(split_text)}\n</span></body>'
+                f'<body><span style="color:#eeeeee; font-size:{textSize}">\n{"".join(split_text)}\n</span></body>'
                 '</html>')
