@@ -20,6 +20,9 @@ class ButtonsDialog(QWidget):
 
         self.mainWindow = window
 
+        self.ui.content.setOpenExternalLinks(True)
+        self.ui.content.setTextInteractionFlags(Qt.TextSelectableByMouse)
+
         #self.buttons: List[Tuple[str, Callable]] = []
         self.buttons: List[QPushButton] = []
 
