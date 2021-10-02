@@ -16,5 +16,7 @@ ui/ui_handler/__pycache__
 ui/ui_sources/__pycache__
 ui/utils/__pycache__
 
+unrar.exe
+
 *.pyo
 *.pyc
