@@ -16,6 +16,8 @@ Older versions and pre-releases builds are available on [**releases section**](h
     $ pip install PySide6
     $ pip install psutil
     $ pip install pywin32   #If your system - Windows
+    $ pip install rarfile
+    $ pip install py7zr
     
 ### Build
     $ pip install pyinstaller  
