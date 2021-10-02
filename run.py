@@ -84,15 +84,15 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     except:
         pass
 
+    callError = lambda: sys.__excepthook__(exc_type, exc_value, exc_traceback)
     errorText = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 
     from main import ModLoader, PRODUCT
     if ModLoader.app is not None:
-        ModLoader.app.showError("Fatal Error:", errorText, terminateApp)
+        ModLoader.app.showError("Fatal Error:", errorText, lambda: [callError(), terminateApp()])
     else:
         Error(PRODUCT, errorText)
-
-    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        callError()
 
 
 sys.excepthook = handle_exception
