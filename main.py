@@ -5,6 +5,7 @@ import py7zr
 import urllib
 import rarfile
 import zipfile
+import traceback
 import threading
 import webbrowser
 import subprocess
@@ -350,13 +351,22 @@ class ModLoader(QMainWindow):
                 self.progressDialog.setContent("Loading mod...")
                 self.progressDialog.show()
 
-        elif data[0] == Environment.UninstallMod:
+        elif cmd == Environment.UninstallMod:
             uninstalling, modHash = data[1]
             if uninstalling:
                 modClass = self.mods.mods[modHash]
                 self.progressDialog.setTitle(f"Uninstalling mod '{modClass.name}'...")
                 self.progressDialog.setContent("")
                 self.progressDialog.show()
+
+        elif cmd == Environment.DeleteMod:
+            pass
+
+        elif cmd == Environment.SetModsPath:
+            pass
+
+        elif cmd == Environment.InstallBaseMod:
+            self.loading.setText("Installing base mod...")
 
         else:
             print(f"Controller <- {str(data)}\n", end="")
@@ -662,14 +672,17 @@ class ModLoader(QMainWindow):
                             QApplication.processEvents()
                             modZip.extract(file, self.modsPath)
 
-            os.remove(archivePath)
-
             self.reloadMods()
-        except Exception as e:
-            print("Error unpack mod zip\n", e)
+            self.progressDialog.hide()
+
+        except rarfile.RarCannotExec:
+            self.showError("Unpack error:", "WinRar 'unrar.exe' not found")
+
+        except:
+            self.showError("Unpack error:", "".join(traceback.format_exception(*sys.exc_info())))
 
         finally:
-            self.progressDialog.hide()
+            os.remove(archivePath)
 
 
 # pyrcc5 -o ui/ui_sources/icons_rc.py ui/ui_sources/icons.qrc
