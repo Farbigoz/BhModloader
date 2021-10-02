@@ -16,7 +16,7 @@ import encodings.idna
 from typing import List
 
 import core
-from core import NotificationType, Environment, Notification
+from core import NotificationType, Environment, Notification, CORE_VERSION
 
 from PySide6.QtCore import QSize, QTranslator, QLocale, QTimer, Signal
 from PySide6.QtGui import QIcon, QFontDatabase
@@ -31,13 +31,15 @@ from ui.ui_handler.buttonsdialog import ButtonsDialog
 from ui.ui_handler.acceptdialog import AcceptDialog
 
 from ui.utils.layout import ClearFrame, AddToFrame
-from ui.utils.version import GetLatest, GITHUB, REPO, VERSION, GIT_VERSION, PRERELEASE
+from ui.utils.version import GetLatest, GITHUB, REPO, VERSION, GIT_VERSION, PRERELEASE, GAMEBANANA
 from ui.utils.textformater import TextFormatter
 
 import ui.ui_sources.translate as translate
 
 
 SUPPORT_URL = "https://www.patreon.com/bhmodloader"
+
+PRODUCT = "Brawlhalla ModLoader"
 
 
 def InitWindowSetText(text):
@@ -133,12 +135,14 @@ class ModLoader(QMainWindow):
 
     errors: List[Notification] = []
 
+    app = False
+
     def __init__(self):
         super().__init__()
         self.ui = Window()
         self.ui.setupUi(self)
 
-        self.setWindowTitle("Brawlhalla ModLoader")
+        self.setWindowTitle(PRODUCT)
         self.setWindowIcon(QIcon(':/icons/resources/icons/App.ico'))
 
         InitWindowSetText("core libs")
@@ -146,6 +150,7 @@ class ModLoader(QMainWindow):
         self.controller.setModsPath(self.modsPath)
         self.controller.reloadMods()
         self.controller.getModsData()
+        self.controller.installBaseMod(f"{PRODUCT}: {VERSION}")
         InitWindowClose()
 
         self.loading = Loading()
@@ -181,6 +186,8 @@ class ModLoader(QMainWindow):
         self.importQueue.setFileSignal(self.queueFileSignal)
 
         self.setForeground()
+
+        self.__class__.app = self
 
     def controllerGet(self):
         data = self.controller.getData()
@@ -260,7 +267,7 @@ class ModLoader(QMainWindow):
                 self.mods.selectedModButton.updateData()
                 self.progressDialog.hide()
 
-                self.showErrors()
+                self.showErrorNotifications()
 
             # Uninstalling
             elif ntype == NotificationType.UninstallingModSwf:
@@ -286,7 +293,7 @@ class ModLoader(QMainWindow):
                 self.mods.selectedModButton.updateData()
 
                 self.progressDialog.hide()
-                self.showErrors()
+                self.showErrorNotifications()
 
             elif ntype in [NotificationType.CompileModSourcesSpriteHasNoSymbolclass,  # Compiler
                            NotificationType.CompileModSourcesSpriteEmpty,
@@ -325,7 +332,7 @@ class ModLoader(QMainWindow):
                                  modFileExist=modData.get("modFileExist", False))
 
             self.setModsScreen()
-            self.showErrors()
+            self.showErrorNotifications()
 
         elif cmd == Environment.GetModConflict:
             searching, modHash = data[1]
@@ -354,7 +361,7 @@ class ModLoader(QMainWindow):
         else:
             print(f"Controller <- {str(data)}\n", end="")
 
-    def showErrors(self):
+    def showErrorNotifications(self):
         if self.errors:
             errors = []
             errorsNotifications = self.errors.copy()
@@ -403,15 +410,36 @@ class ModLoader(QMainWindow):
                     errors.append(repr(notif))
 
             if errors:
-                self.buttonsDialog.setTitle("Errors:")
-
                 string = ""
                 for error in errors:
                     string += f"{error}\n"
 
-                self.buttonsDialog.setContent(string)
-                self.buttonsDialog.setButtons([("Ok", self.buttonsDialog.hide)])
-                self.buttonsDialog.show()
+                self.showError("Errors:", string)
+
+    def showError(self, title, content, action=None):
+        self.buttonsDialog.setTitle(title)
+
+        if self.acceptDialog.isShown():
+            self.acceptDialog.hide()
+
+        if self.buttonsDialog.isShown():
+            self.buttonsDialog.hide()
+
+        if self.progressDialog.isShown():
+            self.progressDialog.hide()
+
+        if action is None:
+            action = self.buttonsDialog.hide
+
+        self.buttonsDialog.setContent(content)
+        self.buttonsDialog.setButtons([("Copy error", lambda: self.copyToClipboard(f"{title}\n\n{content}")),
+                                       ("Ok", action)])
+        self.buttonsDialog.show()
+
+    def copyToClipboard(self, text):
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard)
+        cb.setText(text, mode=cb.Clipboard)
 
     def setLoadingScreen(self):
         ClearFrame(self.ui.mainFrame)
@@ -427,11 +455,13 @@ class ModLoader(QMainWindow):
     def showInformation(self):
         self.buttonsDialog.setTitle("About")
 
-        string = TextFormatter.table([["Product:", "Brawlhalla ModLoader"],
+        string = TextFormatter.table([["Product:", PRODUCT],
                                       ["Version:", VERSION],
                                       ["GitHub tag:", GIT_VERSION or "None"],
                                       ["Status:", 'Beta' if PRERELEASE else 'Release'],
+                                      ["Core version:", CORE_VERSION],
                                       ["Homepage:", f"<url=\"{GITHUB}/{REPO}\">{GITHUB}/{REPO}</url>"],
+                                      [None, f"<url=\"{GAMEBANANA}\">{GAMEBANANA}</url>"],
                                       ["Author:", "I_FabrizioG_I"],
                                       ["Contacts:", "Discord: I_FabrizioG_I#8111"],
                                       [None, "VK: vk/fabriziog"]], newLine=False)

@@ -78,12 +78,34 @@ multiprocessing.Process._bootstrap = _bootstrap
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
-    Error("ModLoader", "".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+    try:
+        import pyi_splash
+        pyi_splash.close()
+    except:
+        pass
+
+    errorText = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+
+    from main import ModLoader, PRODUCT
+    if ModLoader.app is not None:
+        ModLoader.app.showError("Fatal Error:", errorText, terminateApp)
+    else:
+        Error(PRODUCT, errorText)
+
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 sys.excepthook = handle_exception
 threading.excepthook = lambda hook: handle_exception(hook.exc_type, hook.exc_value, hook.exc_traceback)
+
+
+def terminateApp():
+    if mlserver is not None:
+        mlserver.close()
+    for proc in multiprocessing.active_children():
+        proc.kill()
+    os.kill(multiprocessing.current_process().pid, 0)
+    sys.exit(0)
 
 
 def GetLocalPath():
@@ -247,7 +269,7 @@ def MLServer(mlserver: socket, app):
         if command == Commands.NONE:
             pass
         elif command == Commands.JUST_OPEN:
-            pass
+            app.setForeground()
         elif command == Commands.OPEN_FILE:
             file = _mlclient.recv(size).decode("UTF-8")
             if file.endswith(MOD_FILE_FORMAT):

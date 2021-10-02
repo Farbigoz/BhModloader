@@ -3,6 +3,7 @@ import sys
 import json
 import urllib.request
 
+GAMEBANANA = "https://gamebanana.com/tools/7444"
 
 GITHUB = "https://github.com"
 GITHUB_API = "https://api.github.com"

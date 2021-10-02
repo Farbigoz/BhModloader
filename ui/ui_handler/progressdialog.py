@@ -16,6 +16,9 @@ class ProgressDialog(QWidget):
     def onResize(self):
         self.setGeometry(0, 0, self.mainWindow.width(), self.mainWindow.height())
 
+    def isShown(self):
+        return self.parent() is not None
+
     def show(self):
         if self.parent() is None:
             self.setParent(self.mainWindow)

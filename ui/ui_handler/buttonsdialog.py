@@ -11,6 +11,7 @@ class ButtonsDialog(QWidget):
     font.setPointSize(10)
     font.setBold(False)
 
+    maxContentHeight = 300
 
     def __init__(self, window):
         super().__init__()
@@ -19,9 +20,6 @@ class ButtonsDialog(QWidget):
         self.ui.setupUi(self)
 
         self.mainWindow = window
-
-        self.ui.content.setOpenExternalLinks(True)
-        self.ui.content.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
         #self.buttons: List[Tuple[str, Callable]] = []
         self.buttons: List[QPushButton] = []
@@ -53,11 +51,21 @@ class ButtonsDialog(QWidget):
     def onResize(self):
         self.setGeometry(0, 0, self.mainWindow.width(), self.mainWindow.height())
 
+    def isShown(self):
+        return self.parent() is not None
+
     def show(self):
         if self.parent() is None:
             self.setParent(self.mainWindow)
             self.parent().layout().addWidget(self)
             self.onResize()
+
+            if self.ui.content.height() <= self.maxContentHeight:
+                self.ui.scrollLabel.setMinimumHeight(self.ui.content.height())
+                self.ui.scrollLabel.setMaximumHeight(self.ui.content.height())
+            else:
+                self.ui.scrollLabel.setMinimumHeight(self.maxContentHeight)
+                self.ui.scrollLabel.setMaximumHeight(self.maxContentHeight)
 
     def hide(self):
         if self.parent() is not None:
