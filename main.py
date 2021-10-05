@@ -40,7 +40,7 @@ import ui.ui_sources.translate as translate
 
 SUPPORT_URL = "https://www.patreon.com/bhmodloader"
 
-PRODUCT = "Brawlhalla ModLoader"
+PROGRAM_NAME = "Brawlhalla ModLoader"
 
 
 def InitWindowSetText(text):
@@ -136,14 +136,16 @@ class ModLoader(QMainWindow):
 
     errors: List[Notification] = []
 
-    app = False
+    app = None
 
     def __init__(self):
         super().__init__()
         self.ui = Window()
         self.ui.setupUi(self)
 
-        self.setWindowTitle(PRODUCT)
+        self.__class__.app = self
+
+        self.setWindowTitle(PROGRAM_NAME)
         self.setWindowIcon(QIcon(':/icons/resources/icons/App.ico'))
 
         InitWindowSetText("core libs")
@@ -151,7 +153,7 @@ class ModLoader(QMainWindow):
         self.controller.setModsPath(self.modsPath)
         self.controller.reloadMods()
         self.controller.getModsData()
-        self.controller.installBaseMod(f"{PRODUCT}: {VERSION}")
+        self.controller.installBaseMod(f"{PROGRAM_NAME}: {VERSION}")
         InitWindowClose()
 
         self.loading = Loading()
@@ -187,8 +189,6 @@ class ModLoader(QMainWindow):
         self.importQueue.setFileSignal(self.queueFileSignal)
 
         self.setForeground()
-
-        self.__class__.app = self
 
     def controllerGet(self):
         data = self.controller.getData()
@@ -465,7 +465,7 @@ class ModLoader(QMainWindow):
     def showInformation(self):
         self.buttonsDialog.setTitle("About")
 
-        string = TextFormatter.table([["Product:", PRODUCT],
+        string = TextFormatter.table([["Product:", PROGRAM_NAME],
                                       ["Version:", VERSION],
                                       ["GitHub tag:", GIT_VERSION or "None"],
                                       ["Status:", 'Beta' if PRERELEASE else 'Release'],
