@@ -4,48 +4,42 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget
 
 
-class QExecMainThread(QWidget):
+class _Signal(QWidget):
+    signal = Signal(tuple, dict)
+
+    def connectSignal(self, call):
+        self.signal.connect(call)
+
+    def call(self, *args, **kwargs):
+        self.signal.emit(args, kwargs)
+
+
+class QExecMainThread:
     _execs = []
 
-    signal = Signal(tuple)
-
     def __init__(self, method):
-        args = method.__code__.co_varnames[:method.__code__.co_argcount]
-        if len(args) > 0 and args[0] == "self":
-            self.args = args[1:]
-        else:
-            self.args = args
-
         self.method = method
         self.initClass = None
-
-        self._initFlag = False
+        self.signal = None
 
         self._execs.append(self)
 
-    def _init(self, initClass):
-        self.initClass = initClass
-
-        if not self._initFlag:
-            super().__init__()
-            self._initFlag = True
-
     @classmethod
     def init(cls, initClass):
-        for _exec in cls._execs:
-            _exec._init(initClass)
-
-            if getattr(initClass.__class__, _exec.method.__code__.co_name).method == _exec.method:
-                _exec.signal.connect(_exec.call)
+        for name in dir(initClass):
+            selfClass = getattr(initClass, name)
+            if selfClass.__class__ == cls:
+                selfClass.initClass = initClass
+                selfClass.signal = _Signal()
+                selfClass.signal.connectSignal(selfClass.call)
 
     def __call__(self, *args, **kwargs):
         if threading.main_thread() != threading.current_thread():
             if self.signal is not None:
-                self.signal.emit((args, kwargs))
+                self.signal.call(*args, **kwargs)
         else:
             self.method(self.initClass, *args, **kwargs)
 
-    def call(self, _args):
-        args, kwargs = _args
+    def call(self, args, kwargs):
         if self.initClass is not None:
             self.method(self.initClass, *args, **kwargs)
