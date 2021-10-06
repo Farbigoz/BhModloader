@@ -16,8 +16,20 @@ import encodings.idna
 
 from typing import List
 
-import core
-from core import NotificationType, Environment, Notification, CORE_VERSION
+try:
+    import core
+    from core import NotificationType, Notification, Environment, CORE_VERSION
+
+    import core.core.ffdec
+
+    JAVA_FOUND = True
+except ImportError as e:
+    NotificationType = Notification = Environment = CORE_VERSION = None
+
+    if e.msg == "Java not found!":
+        JAVA_FOUND = False
+    else:
+        sys.excepthook(*sys.exc_info())
 
 from PySide6.QtCore import QSize, QTranslator, QLocale, QTimer, Signal
 from PySide6.QtGui import QIcon, QFontDatabase
@@ -34,6 +46,7 @@ from ui.ui_handler.acceptdialog import AcceptDialog
 from ui.utils.layout import ClearFrame, AddToFrame
 from ui.utils.version import GetLatest, GITHUB, REPO, VERSION, GIT_VERSION, PRERELEASE, GAMEBANANA
 from ui.utils.textformater import TextFormatter
+from ui.utils.mainthread import QExecMainThread
 
 import ui.ui_sources.translate as translate
 
@@ -60,6 +73,13 @@ def InitWindowClose():
             pyi_splash.close()
         except:
             pass
+
+
+def TerminateApp(exitId=0):
+    for proc in multiprocessing.active_children():
+        proc.kill()
+    os.kill(multiprocessing.current_process().pid, exitId)
+    sys.exit(exitId)
 
 
 class ImportQueue:
@@ -143,18 +163,12 @@ class ModLoader(QMainWindow):
         self.ui = Window()
         self.ui.setupUi(self)
 
-        self.__class__.app = self
+        QExecMainThread.init(self)
+
+        InitWindowSetText("ui")
 
         self.setWindowTitle(PROGRAM_NAME)
         self.setWindowIcon(QIcon(':/icons/resources/icons/App.ico'))
-
-        InitWindowSetText("core libs")
-        self.controller = core.Controller()
-        self.controller.setModsPath(self.modsPath)
-        self.controller.reloadMods()
-        self.controller.getModsData()
-        self.controller.installBaseMod(f"{PROGRAM_NAME}: {VERSION}")
-        InitWindowClose()
 
         self.loading = Loading()
         self.header = HeaderFrame(githubMethod=lambda: webbrowser.open(f"{GITHUB}/{REPO}"),
@@ -172,14 +186,9 @@ class ModLoader(QMainWindow):
 
         self.setLoadingScreen()
 
-        self.controllerGetterTimer = QTimer()
-        self.controllerGetterTimer.timeout.connect(self.controllerGet)  # connect it to your update function
-        self.controllerGetterTimer.start(10)
-
         # self.resize(QSize(977, 550))
         self.setMinimumSize(QSize(850, 550))
 
-        self.versionSignal.connect(self.newVersion)
         threading.Thread(target=self.checkNewVersion).start()
 
         self.queueUrlSignal.connect(self.queueUrl)
@@ -190,7 +199,36 @@ class ModLoader(QMainWindow):
 
         self.setForeground()
 
-    def controllerGet(self):
+        self.controller = None
+        if JAVA_FOUND:
+            threading.Thread(target=self.runController).start()
+
+            # Get core events
+            self.controllerGetterTimer = QTimer()
+            self.controllerGetterTimer.timeout.connect(self.controllerHandler)
+            self.controllerGetterTimer.start(10)
+        else:
+            message = ("Java not found!\n\nRecommended java: "
+                       "<url=\"https://libericajdk.ru/pages/downloads/#/java-8-lts\">"
+                       "https://libericajdk.ru/pages/downloads/#/java-8-lts</url>")
+            self.showError("Fatal Error:", TextFormatter.format(message, 11), terminate=True)
+
+        InitWindowClose()
+        self.__class__.app = self
+
+    def runController(self):
+        self.loading.setText("Loading ModLoader Core")
+
+        self.controller = core.Controller()
+        self.controller.setModsPath(self.modsPath)
+        self.controller.reloadMods()
+        self.controller.getModsData()
+        self.controller.installBaseMod(f"{PROGRAM_NAME}: {VERSION}")
+
+    def controllerHandler(self):
+        if self.controller is None:
+            return
+
         data = self.controller.getData()
         if data is None:
             return
@@ -203,7 +241,7 @@ class ModLoader(QMainWindow):
 
             if ntype == NotificationType.LoadingMod:
                 modPath = notification.args[0]
-                self.loading.setText(f"Loading mod '{modPath}'")
+                self.loading.setText(f"Loading mod '{modPath or 'from cache'}'")
 
             elif ntype == NotificationType.ModElementsCount:
                 modHash, count = notification.args
@@ -426,7 +464,8 @@ class ModLoader(QMainWindow):
 
                 self.showError("Errors:", string)
 
-    def showError(self, title, content, action=None):
+    @QExecMainThread
+    def showError(self, title, content, action=None, terminate=False):
         self.buttonsDialog.setTitle(title)
 
         if self.acceptDialog.isShown():
@@ -440,6 +479,9 @@ class ModLoader(QMainWindow):
 
         if action is None:
             action = self.buttonsDialog.hide
+
+        if terminate:
+            action = TerminateApp
 
         self.buttonsDialog.setContent(content)
         self.buttonsDialog.setButtons([("Copy error", lambda: self.copyToClipboard(f"{title}\n\n{content}")),
@@ -535,8 +577,7 @@ class ModLoader(QMainWindow):
         self.buttonsDialog.onResize()
         super().resizeEvent(event)
 
-    versionSignal = Signal(str, str, str, str)
-
+    @QExecMainThread
     def newVersion(self, url: str, fileUrl: str, version: str, body: str):
         self.buttonsDialog.setTitle(f"New version available '{version}'")
         self.buttonsDialog.setContent(TextFormatter.format(body, 11))
@@ -576,8 +617,9 @@ class ModLoader(QMainWindow):
 
         if latest is not None:
             newVersion, fileUrl, version, body = latest
-            self.versionSignal.emit(newVersion, fileUrl, version, body)
+            self.newVersion(newVersion, fileUrl, version, body)
 
+    @QExecMainThread
     def setForeground(self):
         try:
             if sys.platform.startswith("win"):
@@ -691,7 +733,7 @@ class ModLoader(QMainWindow):
 # venv\Lib\site-packages\PySide6\lrelease.exe E:\BrawlhallaModloaderApp_0.3\ui\ui_sources\translate\header\ru_RU.ts
 
 
-def RunApp(mlserver=None):
+def RunApp():
     app = QApplication(sys.argv)
 
     font_db = QFontDatabase()
@@ -718,12 +760,7 @@ def RunApp(mlserver=None):
     window.show()
 
     exitId = app.exec()
-    if mlserver is not None:
-        mlserver.close()
-    for proc in multiprocessing.active_children():
-        proc.kill()
-    os.kill(multiprocessing.current_process().pid, exitId)
-    sys.exit(exitId)
+    TerminateApp(exitId)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 import os
 import sys
-import core
 import json
 import socket
 import hashlib
@@ -8,20 +7,30 @@ import traceback
 import threading
 import multiprocessing
 
+ERROR = None
+try:
+    import core
+except ImportError as e:
+    # Java not found error
+    core = None
+
+    # If other error
+    if e.msg != "Java not found!":
+        ERROR = sys.exc_info()
+
 from client import Arguments, Commands, CONFIG_FILE, CONFIG, SOCKET_PORT, MODLOADER_CLIENT
 
 from ui.utils.systemdialog import Error
 
-
 FROZEN = getattr(sys, 'frozen', False)
 
-MOD_FILE_FORMAT = core.MOD_FILE_FORMAT
+MOD_FILE_FORMAT = core.MOD_FILE_FORMAT if core is not None else ""
 FILE_DESCRIPTION = "Brawlhalla Mod"
 FILE_ICON = "file_icon.ico"
 
-
-os.environ["CLIENT_PATH"] = os.path.join(core.MODLOADER_CACHE_PATH, MODLOADER_CLIENT)
-os.environ["FILE_ICON"] = os.path.join(core.MODLOADER_CACHE_PATH, FILE_ICON)
+if core is not None:
+    os.environ["CLIENT_PATH"] = os.path.join(core.MODLOADER_CACHE_PATH, MODLOADER_CLIENT)
+    os.environ["FILE_ICON"] = os.path.join(core.MODLOADER_CACHE_PATH, FILE_ICON)
 
 
 def _bootstrap(self, parent_sentinel=None):
@@ -84,28 +93,21 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     except:
         pass
 
-    callError = lambda: sys.__excepthook__(exc_type, exc_value, exc_traceback)
     errorText = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 
-    from main import ModLoader, PROGRAM_NAME
+    from main import ModLoader, PROGRAM_NAME, TerminateApp
     if ModLoader.app is not None:
-        ModLoader.app.showError("Fatal Error:", errorText, lambda: [callError(), terminateApp()])
+        ModLoader.app.showError("Fatal Error:", errorText, terminate=True)
     else:
         Error(PROGRAM_NAME, errorText)
-        callError()
+        TerminateApp()
 
 
 sys.excepthook = handle_exception
 threading.excepthook = lambda hook: handle_exception(hook.exc_type, hook.exc_value, hook.exc_traceback)
 
-
-def terminateApp():
-    if mlserver is not None:
-        mlserver.close()
-    for proc in multiprocessing.active_children():
-        proc.kill()
-    os.kill(multiprocessing.current_process().pid, 0)
-    sys.exit(0)
+if ERROR is not None:
+    sys.excepthook(ERROR)
 
 
 def GetLocalPath():
@@ -269,7 +271,7 @@ def MLServer(mlserver: socket, app):
         if command == Commands.NONE:
             pass
         elif command == Commands.JUST_OPEN:
-            app.setForeground()
+            app.app.setForeground()
         elif command == Commands.OPEN_FILE:
             file = _mlclient.recv(size).decode("UTF-8")
             if file.endswith(MOD_FILE_FORMAT):
@@ -284,13 +286,18 @@ def MLServer(mlserver: socket, app):
     while True:
         try:
             mlclient, _ = mlserver.accept()
-            threading.Thread(target=handle, args=(mlclient, app)).start()
+            threading.Thread(target=handle, args=(mlclient, app), daemon=True).start()
         except OSError:
             break
 
 
 if __name__ == "__main__" and "--multiprocessing-fork" not in sys.argv:
     os.chdir(os.path.split(sys.argv[0])[0])
+
+    if core is None:
+        from main import RunApp
+
+        RunApp()
 
     import argparse
 
@@ -327,9 +334,11 @@ if __name__ == "__main__" and "--multiprocessing-fork" not in sys.argv:
         mlserver.bind(('', SOCKET_PORT))
         mlserver.listen(5)
         from main import ModLoader, RunApp
-        threading.Thread(target=MLServer, args=(mlserver, ModLoader)).start()
-        RunApp(mlserver)
+
+        threading.Thread(target=MLServer, args=(mlserver, ModLoader), daemon=True).start()
+        RunApp()
 
 elif "--multiprocessing-fork" in sys.argv:
-    from main import RunApp
-    RunApp()
+    from core import Controller
+
+    Controller()
